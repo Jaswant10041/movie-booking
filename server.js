@@ -10,6 +10,7 @@ const mongoose=require('mongoose');
 const PORT=process.env.PORT || 5000;
 DbConnect();
 
+app.use('/api/v1/moviebooking/movies',require('./routes/movieRouter'));
 app.use('/api/v1/moviebooking',require('./routes/userRouter'));
 
 mongoose.connection.once("open", async () => {

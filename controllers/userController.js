@@ -35,6 +35,55 @@ const userLogin = async (req, res) => {
     res.status(500).json({msg:"Error logging in"});
   }
 };
+const updatePassword = async (req, res) => {
+  const { email, newPassword,confirmPassword } = req.body;
+
+  if (!email || !newPassword || !confirmPassword) {
+    return res.status(400).send("All fields are required");
+  }
+  if(newPassword!==confirmPassword){
+    return res.status(400).send("Password and Confirm Password must match");
+  }
+  try {
+    const foundData=await User.findOne({email});
+    if(!foundData){
+        return res.status(404).json({
+            msg: "Account Not found",
+        });   
+    }
+    console.log(foundData);
+    const hashedPassword=await bcrypt.hash(newPassword,10);
+    foundData.password=hashedPassword;
+    await foundData.save();
+    res.status(200).json({msg:"Password Updated Successfully"});
+  } catch (err) {
+    res.status(500).json({msg:"Error in updating password"});
+  }
+};
+const adminLogin = async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+      return res.status(400).send('Email and Password are required');
+  }
+
+  try {
+      const admin = await User.findOne({ email: 'admin@example.com' }); // Assuming admin email is fixed
+      if (!admin) {
+          return res.status(404).send('Admin not found');
+      }
+
+      const isPasswordValid = admin.password === `hashed_${password}`; // Placeholder for password comparison
+      if (!isPasswordValid) {
+          return res.status(401).send('Invalid credentials');
+      }
+
+      const token = `token_for_admin_${admin._id}`; // Placeholder for token generation
+      res.status(200).json({ message: 'Admin login successful', token });
+  } catch (err) {
+      res.status(500).send('Error logging in as admin');
+  }
+}
 const userRegister = async (req, res) => {
   const {
     firstName,
@@ -88,47 +137,10 @@ const userRegister = async (req, res) => {
     res.status(500).send("Error registering user");
   }
 };
-// const getCurrentUser = async (req, res) => {
-//   const email = req.email;
-//   const user = await Users.findOne({ email });
-//   if (!user) {
-//     return res.status(404).json({ message: "User Not Found" });
-//   }
-//   res.status(200).json(user.toUserResponse());
-// };
 
-// const updateUserData = async (req, res) => {
-//   const data = req.body;
-//   console.log(data);
-//   const { email, name, oldPassword, newPassword } = data;
-//   const foundData = await Users.findOne({ email });
-//   // console.log(foundData);
-//   const isCorrectPassword = await bcrypt.compare(
-//     oldPassword,
-//     foundData.password
-//   );
-//   if (!isCorrectPassword) {
-//     res.status(401).json({
-//       errors: {
-//         body: "Incorrect Password",
-//       },
-//     });
-//     return;
-//   }
-//   const hashedPassword = await bcrypt.hash(newPassword, 10);
-//   const updatedData = await Users.findOneAndUpdate(
-//     { email },
-//     { name: name, password: hashedPassword },
-//     {
-//       new: true,
-//     }
-//   );
-//   console.log(updatedData);
-//   res.status(200).json({ data: updatedData });
-// };
 module.exports = {
   userLogin,
+  adminLogin,
+  updatePassword,
   userRegister,
-//   getCurrentUser,
-//   updateUserData,
 };
